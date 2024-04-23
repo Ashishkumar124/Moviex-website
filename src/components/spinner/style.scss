@@ -5,13 +5,15 @@
     display: flex;
     align-items: center;
     justify-content: center;
+
     .spinner {
         animation: rotate 2s linear infinite;
         z-index: 2;
         width: 50px;
         height: 50px;
-        & .path {
-            stroke: hsl(210, 70, 75);
+
+        .path {
+            stroke: hsl(210, 70%, 75%); /* Fix: Add % unit */
             stroke-linecap: round;
             animation: dash 1.5s ease-in-out infinite;
         }
