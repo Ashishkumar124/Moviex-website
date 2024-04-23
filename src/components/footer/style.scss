@@ -31,6 +31,13 @@
                 color: var(--pink);
             }
         }
+        .menuItem > a{
+            color: white;
+            text-decoration: none;
+            &:hover {
+                color: var(--pink);
+            }
+        }
     }
     .infoText {
         font-size: 12px;

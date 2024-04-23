@@ -8,7 +8,7 @@ import { fetchDataFromApi } from "../../utils/api";
 import ContentWrapper from "../../components/contentWrapper/ContentWrapper";
 import MovieCard from "../../components/movieCard/MovieCard";
 import Spinner from "../../components/spinner/Spinner";
-import noResults from "../../assets/no-results.png";
+import noResultsImage from "../../assets/no-results.png";
 
 const SearchResult = () => {
     const [data, setData] = useState(null);
@@ -16,31 +16,30 @@ const SearchResult = () => {
     const [loading, setLoading] = useState(false);
     const { query } = useParams();
 
-    const fetchInitialData = () => {
+    const fetchInitialData = async () => {
         setLoading(true);
-        fetchDataFromApi(`/search/multi?query=${query}&page=${pageNum}`).then(
-            (res) => {
-                setData(res);
-                setPageNum((prev) => prev + 1);
-                setLoading(false);
-            }
-        );
+        try {
+            const response = await fetchDataFromApi(`/search/multi?query=${query}&page=${pageNum}`);
+            setData(response);
+            setPageNum(prevPageNum => prevPageNum + 1);
+        } catch (error) {
+            console.error("Error fetching initial data:", error);
+        } finally {
+            setLoading(false);
+        }
     };
 
-    const fetchNextPageData = () => {
-        fetchDataFromApi(`/search/multi?query=${query}&page=${pageNum}`).then(
-            (res) => {
-                if (data?.results) {
-                    setData({
-                        ...data,
-                        results: [...data?.results, ...res.results],
-                    });
-                } else {
-                    setData(res);
-                }
-                setPageNum((prev) => prev + 1);
-            }
-        );
+    const fetchNextPageData = async () => {
+        try {
+            const response = await fetchDataFromApi(`/search/multi?query=${query}&page=${pageNum}`);
+            setData(prevData => ({
+                ...prevData,
+                results: [...prevData.results, ...response.results],
+            }));
+            setPageNum(prevPageNum => prevPageNum + 1);
+        } catch (error) {
+            console.error("Error fetching next page data:", error);
+        }
     };
 
     useEffect(() => {
@@ -53,37 +52,31 @@ const SearchResult = () => {
             {loading && <Spinner initial={true} />}
             {!loading && (
                 <ContentWrapper>
-                    {data?.results?.length > 0 ? (
+                    {data && data.results && data.results.length > 0 ? (
                         <>
                             <div className="pageTitle">
-                                {`Search ${
-                                    data?.total_results > 1
-                                        ? "results"
-                                        : "result"
-                                } of '${query}'`}
+                                {`Search ${data.total_results > 1 ? "results" : "result"} of '${query}'`}
                             </div>
                             <InfiniteScroll
                                 className="content"
-                                dataLength={data?.results?.length || []}
+                                dataLength={data.results.length}
                                 next={fetchNextPageData}
-                                hasMore={pageNum <= data?.total_pages}
+                                hasMore={pageNum <= data.total_pages}
                                 loader={<Spinner />}
                             >
-                                {data?.results.map((item, index) => {
-                                    if (item.media_type === "person") return;
-                                    return (
-                                        <MovieCard
-                                            key={index}
-                                            data={item}
-                                            fromSearch={true}
-                                        />
-                                    );
-                                })}
+                                {data.results.map((item, index) => (
+                                    <MovieCard
+                                        key={index}
+                                        data={item}
+                                        fromSearch={true}
+                                    />
+                                ))}
                             </InfiniteScroll>
                         </>
                     ) : (
                         <span className="resultNotFound">
-                            Sorry, Results not found!
+                            <img src={noResultsImage} alt="No results found" />
+                            Sorry, no results found!
                         </span>
                     )}
                 </ContentWrapper>
